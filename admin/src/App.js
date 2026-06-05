@@ -35,8 +35,8 @@ function Login({ onLogin }) {
   );
 }
 
-const PLANOS = ["Essencial", "Profissional", "Avançado"];
-const PLANO_VALOR = { Essencial: 397, Profissional: 697, Avançado: 1197, essencial: 397, profissional: 697, avançado: 1197 };
+const PLANOS = ["Essencial", "Crescimento"];
+const PLANO_VALOR = { Essencial: 297, Crescimento: 597, essencial: 297, crescimento: 597 };
 const CHECKLIST_LABELS = { instancia: "Instância criada", qr: "QR Code conectado", prompt: "Prompt configurado", testado: "Agente testado", treinado: "Cliente treinado" };
 const MRR_HISTORICO = [{ mes: "Jan", valor: 0 }, { mes: "Fev", valor: 1094 }, { mes: "Mar", valor: 1788 }, { mes: "Abr", valor: 1788 }, { mes: "Mai", valor: 1094 }];
 
