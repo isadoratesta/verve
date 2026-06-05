@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 const API = "https://primary-production-3fd339.up.railway.app/webhook";
-const SENHA = "FlowIA@2026#Admin";
+const SENHA = process.env.REACT_APP_ADMIN_SENHA;
 
 function Login({ onLogin }) {
   const [senha, setSenha] = useState("");
