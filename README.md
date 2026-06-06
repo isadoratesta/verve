@@ -97,7 +97,7 @@ verve/
 
 ## Links
 
-- **Landing page:** [flowiatech.netlify.app](https://flowiatech.netlify.app)
+- **Landing page:** [madebyverve.netlify.app](https://madebyverve.netlify.app)
 - **Instagram:** [@_madebyverve](https://www.instagram.com/_madebyverve)
 - **WhatsApp:** [Falar com a Verve](https://wa.me/message/6BSWD7TOGCXEC1)
 
