@@ -1,70 +1,142 @@
-# Getting Started with Create React App
+# Verve — Painel Administrativo
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Painel de gestão desenvolvido em **React** para operação interna da Verve, um serviço de atendimento inteligente para pequenos negócios via WhatsApp.
 
-## Available Scripts
+O sistema permite gerenciar clientes, acompanhar métricas de negócio e configurar os agentes de IA em produção — tudo em uma interface construída do zero, sem bibliotecas de UI.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Sobre o projeto
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+A Verve opera um modelo SaaS onde cada cliente possui um agente de IA configurado individualmente no WhatsApp. Este painel foi criado para centralizar a gestão operacional do serviço: onboarding de novos clientes, acompanhamento de pagamentos, edição de prompts e monitoramento de métricas.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+O painel consome uma API REST construída em n8n, com dados persistidos em PostgreSQL.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Tecnologias
 
-### `npm run build`
+- React (Create React App)
+- JavaScript (ES2021+)
+- CSS-in-JS via inline styles
+- Google Fonts — Cormorant Garamond + Inter
+- Vercel (deploy)
+- Variáveis de ambiente para credenciais sensíveis
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Funcionalidades
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Dashboard com três níveis de análise
 
-### `npm run eject`
+| Aba | Métricas |
+|---|---|
+| Prioritárias | MRR, churn, pagamentos atrasados, agentes ativos, alertas de vencimento |
+| Semanais | Mensagens respondidas, taxa de renovação, novos clientes, receita por plano |
+| Mensais | LTV médio, clientes fiéis (+3 meses), solicitações de atendente humano, origem dos clientes |
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Inclui gráfico de barras de evolução do MRR construído sem biblioteca de charts.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Gestão de clientes
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- Listagem com busca em tempo real
+- Cadastro de novos clientes com validação
+- Visualização individual com abas por contexto
+- Atualização inline com `onBlur` — sem botão de salvar explícito
+- Ações rápidas: suspender, reativar, cancelar
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Editor de prompt
 
-## Learn More
+Cada cliente possui um prompt individualizado que define o comportamento do agente de IA no WhatsApp. O painel permite editar e salvar esse prompt diretamente, sem necessidade de acesso ao backend.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Onboarding checklist
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Checklist interativo com 5 etapas de ativação por cliente, com barra de progresso e persistência via API.
 
-### Code Splitting
+### Registro de pagamentos
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Histórico de pagamentos por cliente com registro manual de novas entradas e atualização automática do status de adimplência.
 
-### Analyzing the Bundle Size
+### Alertas automáticos
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+O dashboard sinaliza automaticamente clientes com vencimento nos próximos 7 dias e pagamentos em atraso, com link direto para o WhatsApp do cliente.
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Arquitetura e decisões técnicas
 
-### Advanced Configuration
+**Autenticação por sessão:** login com senha via `sessionStorage`, sem dependência de serviço externo de auth. Adequado para uso interno com usuário único.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**Atualização otimista:** o estado local é atualizado imediatamente após cada ação, sem aguardar confirmação da API, para garantir uma experiência fluida.
 
-### Deployment
+**Normalização de dados:** função `normalize()` que padroniza os campos retornados pela API independente de variações de nomenclatura no banco.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**Sem biblioteca de UI:** todos os componentes — cards, badges, tabelas, modais, barras de progresso — foram construídos manualmente com inline styles, garantindo controle total sobre o design.
 
-### `npm run build` fails to minify
+**Identidade visual consistente:** paleta, tipografia e espaçamentos alinhados à landing page institucional da Verve, definidos em constantes reutilizáveis no topo do arquivo.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Variáveis de ambiente:** credenciais e endpoints sensíveis isolados via `process.env`, sem exposição no repositório público.
+
+---
+
+## Identidade visual
+
+Mesma linguagem da landing page institucional.
+
+| Elemento | Valor |
+|---|---|
+| Preto editorial | `#1B1B1B` |
+| Creme principal | `#F7F4EE` |
+| Dourado | `#A88A55` |
+| Cinza pedra | `#8B8378` |
+
+---
+
+## Integração com o backend
+
+O painel consome uma API REST via webhooks do n8n:
+
+| Endpoint | Método | Função |
+|---|---|---|
+| `/clientes` | GET | Listar todos os clientes |
+| `/clientes` | POST | Cadastrar novo cliente |
+| `/clientes/atualizar` | PUT | Atualizar dados do cliente |
+| `/clientes/cancelar` | POST | Cancelar cliente |
+| `/pagamentos` | POST | Registrar pagamento |
+
+---
+
+## Meu papel
+
+Desenvolvi o painel integralmente, desde a concepção até o deploy:
+
+- Definição das funcionalidades e fluxos de uso
+- Arquitetura dos componentes React
+- Implementação de todas as telas e interações
+- Integração com a API REST do n8n
+- Identidade visual alinhada à marca Verve
+- Configuração de variáveis de ambiente e segurança
+- Deploy e configuração no Vercel
+
+---
+
+## Status
+
+Em produção, utilizado ativamente na operação da Verve com clientes reais.
+
+---
+
+## Possíveis evoluções
+
+- Autenticação com múltiplos usuários e níveis de acesso
+- Notificações por e-mail para alertas de vencimento
+- Exportação de relatórios em CSV
+- Gráficos com biblioteca dedicada (Recharts ou Chart.js)
+- Componentização em arquivos separados
+- Testes automatizados
+
+---
+
+## Licença
+
+Todos os direitos reservados à Verve. Projeto proprietário — não deve ser copiado, distribuído ou reutilizado sem autorização.
