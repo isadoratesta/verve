@@ -20,6 +20,28 @@ A Verve não se posiciona como chatbot, automação ou ferramenta de IA.
 
 ---
 
+## Status do projeto
+
+A Verve está em produção com clientes reais pagantes.
+
+Este repositório reúne os dois produtos construídos para viabilizar o serviço: a landing page institucional e o painel administrativo interno. Ambos foram desenvolvidos integralmente por mim — da concepção ao deploy.
+
+---
+
+## O que foi construído
+
+### Landing page — `landing/`
+Site institucional em HTML e CSS puro, sem frameworks. Desenvolvido com foco em design editorial, copywriting e conversão. Inclui SEO semântico completo, responsividade para todos os dispositivos e identidade visual própria.
+
+→ [README da landing](./landing/README.md)
+
+### Painel administrativo — `admin/`
+Aplicação React para gestão operacional do serviço. Permite cadastrar clientes, editar prompts dos agentes de IA, acompanhar métricas de MRR, churn e LTV, registrar pagamentos e monitorar alertas de vencimento. Consome uma API REST construída em n8n com dados em PostgreSQL.
+
+→ [README do admin](./admin/README.md)
+
+---
+
 ## Para quem é
 
 - MEIs e pequenas empresas com até 10 funcionários
@@ -46,7 +68,7 @@ Sem contrato. Sem fidelidade. Cancelamento com 15 dias de antecedência.
 | Camada | Tecnologia |
 |---|---|
 | Automação / backend | n8n (Railway) |
-| Gateway WhatsApp | Evolution API / Z-API |
+| Gateway WhatsApp | Evolution API |
 | Banco de dados | PostgreSQL (Railway) |
 | IA generativa | Claude Sonnet (Anthropic) |
 | Painel admin | React (Vercel) |
@@ -56,18 +78,26 @@ Sem contrato. Sem fidelidade. Cancelamento com 15 dias de antecedência.
 
 ## Estrutura do repositório
 
+```
 verve/
 ├── landing/          # Site institucional (HTML/CSS)
-│   └── index.html
+│   ├── index.html
+│   └── README.md
 ├── admin/            # Painel de gestão (React)
-│   └── src/
+│   ├── src/
+│   └── README.md
 ├── docs/             # Documentação do produto
+│   ├── PRODUCT.md
+│   ├── ARCHITECTURE.md
+│   └── ROADMAP.md
 └── README.md
+```
 
 ---
 
 ## Links
 
+- **Landing page:** [flowiatech.netlify.app](https://flowiatech.netlify.app)
 - **Instagram:** [@_madebyverve](https://www.instagram.com/_madebyverve)
 - **WhatsApp:** [Falar com a Verve](https://wa.me/message/6BSWD7TOGCXEC1)
 
