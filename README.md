@@ -40,6 +40,13 @@ Aplicação React para gestão operacional do serviço. Permite cadastrar client
 
 → [README do admin](./admin/README.md)
 
+### Automação e backend — `docs/`
+O coração do serviço: workflows n8n que orquestram todo o atendimento. Cada mensagem recebida no WhatsApp passa por validações de horário e anti-spam, consulta o prompt individualizado do cliente no PostgreSQL, chama a API do Claude Sonnet para gerar a resposta e a envia com delay humanizado via Evolution API. O sistema é multi-tenant — cada cliente tem sua própria instância, prompt e agente com identidade própria.
+
+Inclui também uma API REST exposta via webhooks do n8n, consumida pelo painel admin para gestão de clientes e pagamentos.
+
+→ [Documentação da automação](./docs/AUTOMATION.md)
+
 ---
 
 ## Para quem é
