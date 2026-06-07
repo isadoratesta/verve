@@ -150,3 +150,21 @@ Os workflows exportados do n8n estão disponíveis nesta pasta para referência 
 - `Assistente_de_Atendimento.json` — workflow principal de atendimento
 - `Flow_IA_API_Parte_I.json` — API REST: clientes (listar, cadastrar, atualizar)
 - `Flow_IA_API_Parte_II.json` — API REST: pagamentos, mensagens, cancelamento
+- `Execute_a_SQL_query_Prompt_Exemplo.json` — exemplo de prompt configurado para um cliente fictício
+
+---
+
+## Exemplo de prompt — Bella Studio (fictício)
+
+O arquivo `Execute_a_SQL_query_Prompt_Exemplo.json` contém um exemplo completo de como um prompt de cliente é estruturado e armazenado no PostgreSQL.
+
+O **Bella Studio** é um salão de beleza fictício criado exclusivamente para fins de demonstração. O prompt de exemplo inclui:
+
+- Nome e personalidade do agente (`Luna`)
+- Endereço, horários e serviços do negócio
+- Tabela de preços
+- Equipe e especialidades
+- Regras de atendimento e tom de comunicação
+- Instruções sobre agendamento e escalação humana
+
+Este exemplo ilustra como cada cliente da Verve recebe um agente com identidade própria, configurado individualmente sem nenhuma mudança no workflow principal.
