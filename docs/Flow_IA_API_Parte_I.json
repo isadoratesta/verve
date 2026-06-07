@@ -1,0 +1,276 @@
+{
+  "name": "Flow IA API - Parte I",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7ff0ca8d-9cda-4584-9e4f-a24c9135a549",
+      "name": "Webhook (Listar Clientes)",
+      "webhookId": "7fc90f28-31d8-47dd-b056-ee1e2a9d5348"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "44b593ba-32f8-42f8-b88f-68e8c25e90b9",
+      "name": "Webhook (Cadastrar Clientes)",
+      "webhookId": "ee0af88a-ab0e-4837-a833-261aa00cd8bb"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  c.id,\n  c.nome_negocio,\n  c.instancia_evolution,\n  c.plano,\n  c.status,\n  c.data_vencimento,\n  c.whatsapp_contato,\n  c.email,\n  c.prompt,\n  c.anotacoes,\n  c.origem,\n  c.checklist,\n  c.pagamento,\n  c.criado_em,\n  COUNT(m.id) as mensagens_mes,\n  COALESCE(\n    json_agg(\n      json_build_object(\n        'id', p.id,\n        'valor', p.valor,\n        'status', p.status,\n        'data', p.data_pagamento\n      ) ORDER BY p.data_pagamento DESC\n    ) FILTER (WHERE p.id IS NOT NULL),\n    '[]'\n  ) as pagamentos\nFROM clientes c\nLEFT JOIN mensagens m ON m.cliente_id = c.id\n  AND m.criado_em >= date_trunc('month', NOW())\nLEFT JOIN pagamentos p ON p.cliente_id = c.id\nGROUP BY c.id\nORDER BY c.criado_em DESC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5be72dbe-b930-46c6-b57e-64134557c21d",
+      "name": "Execute a SQL query (Listar Clientes)",
+      "credentials": {
+        "postgres": {
+          "id": "ctEzYep4QVZ9ipcS",
+          "name": "Postgres account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "728168cb-f097-4265-bb0e-56643432efab",
+      "name": "Respond to Webhook (Listar Clientes)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clientes (nome_negocio, instancia_evolution, plano, status, prompt, whatsapp_contato, email, data_vencimento, criado_em)\nVALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())\nRETURNING *;",
+        "options": {
+          "queryReplacement": "=$1: {{ $json.body.nome }} $2: {{ $json.body.instancia }} $3: {{ $json.body.plano.toLowerCase() }} $4: {{ $json.body.status || 'ativo' }} $5: {{ $json.body.prompt || '' }} $6: {{ $json.body.whatsapp || '' }} $7: {{ $json.body.email || '' }} $8: {{ $json.body.vencimento || null }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        192
+      ],
+      "id": "554f4898-3ffc-432c-9e7b-92fb55405c03",
+      "name": "Execute a SQL query (Cadastrar Clientes)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        192
+      ],
+      "id": "a551f961-fb97-452b-a946-993d61f98220",
+      "name": "Respond to Webhook (Cadastrar Clientes)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "PUT",
+        "path": "clientes/atualizar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        384
+      ],
+      "id": "aae4c3c4-b45e-436f-9e4b-6e82de314d43",
+      "name": "Webhook (Atualizar Cliente)",
+      "webhookId": "678d1bde-ea49-470d-a24c-9f63feb5b14c"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE clientes SET\n  status = COALESCE($2, status),\n  prompt = COALESCE($3, prompt),\n  anotacoes = COALESCE($4, anotacoes),\n  whatsapp_contato = COALESCE($5, whatsapp_contato),\n  email = COALESCE($6, email),\n  plano = COALESCE($7, plano)\nWHERE id = $1\nRETURNING *;",
+        "options": {
+          "queryReplacement": "=$1: {{ $json.body.id }} $2: {{ $json.body.status || null }} $3: {{ $json.body.prompt || null }} $4: {{ $json.body.anotacoes || null }} $5: {{ $json.body.whatsapp || null }} $6: {{ $json.body.email || null }} $7: {{ $json.body.plano || null }} "
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        384
+      ],
+      "id": "a51d6d17-ab9e-48f0-af1f-b15ea3338519",
+      "name": "Execute a SQL query (Atualizar Cliente)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        384
+      ],
+      "id": "26beb7ef-54eb-4700-ac35-7055a74a95f8",
+      "name": "Respond to Webhook (Atualizar Cliente)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Listar Clientes)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Listar Clientes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Cadastrar Clientes)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Cadastrar Clientes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Listar Clientes)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Listar Clientes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Cadastrar Clientes)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Cadastrar Clientes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Atualizar Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Atualizar Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Atualizar Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Atualizar Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "96212b41-8158-4832-98aa-9af125d54b85",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "028ffa85240bb37b087e8851dc3b0186a212ebd4af1b0fc8100dbaa720e434c1"
+  },
+  "nodeGroups": [],
+  "id": "x7wshSTcbB6nubH6",
+  "tags": []
+}

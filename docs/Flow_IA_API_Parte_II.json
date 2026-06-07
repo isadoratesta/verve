@@ -1,0 +1,277 @@
+{
+  "name": "Flow IA API - Parte II",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pagamentos",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6ffb5aec-8b76-482b-99ed-c92ee97520a1",
+      "name": "Webhook (Registrar Pagamentos)",
+      "webhookId": "78ff6e7d-9816-47cf-8c68-cd42923c9599"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO pagamentos (cliente_id, valor, status, data_pagamento, criado_em)\nVALUES ($1, $2, $3, $4, NOW())\nRETURNING *;",
+        "options": {
+          "queryReplacement": "=$1: {{ $json.body.cliente_id }} $2: {{ $json.body.valor }} $3: {{ $json.body.status }} $4: {{ $json.body.data }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8e30bfca-9ea2-4387-b824-5ba7e774c4c8",
+      "name": "Execute a SQL query (Registrar Pagamentos)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "4f62c5e3-7548-4c3a-bd40-fa27c534ce4d",
+      "name": "Respond to Webhook (Registrar Pagamentos)"
+    },
+    {
+      "parameters": {
+        "path": "mensagens",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "9757788b-dfd9-45dd-bba4-c3edacf7db28",
+      "name": "Webhook (Mensagens)",
+      "webhookId": "46528237-2555-4559-962a-308b21f976c6"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT role, conteudo, criado_em\nFROM mensagens\nWHERE cliente_id = $1\nORDER BY criado_em DESC\nLIMIT 50",
+        "options": {
+          "queryReplacement": "=$1: {{ $json.query.cliente_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        192
+      ],
+      "id": "5eeb7e3b-69ca-45f6-b082-0f9759aff70f",
+      "name": "Execute a SQL query (Mensagens)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        192
+      ],
+      "id": "d41d3e53-7136-41e6-84f2-52e0c4c6806b",
+      "name": "Respond to Webhook (Mensagens)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clientes/cancelar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        368
+      ],
+      "id": "5624ab37-17a8-4265-85db-b2571663ec8b",
+      "name": "Webhook (Cancelar Cliente)",
+      "webhookId": "c11c266c-3bae-4906-a95e-89695b1d297f"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE clientes\nSET status = 'cancelado',\n    data_suspensao = NOW()\nWHERE id = $1\nRETURNING *;",
+        "options": {
+          "queryReplacement": "=$1: {{ $json.body.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        368
+      ],
+      "id": "8680b560-d38b-4a2b-ab7b-ffbd3064f896",
+      "name": "Execute a SQL query (Cancelar Cliente)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        368
+      ],
+      "id": "5ad7d1a8-b89f-4098-b794-e3fb59182e75",
+      "name": "Respond to Webhook (Cancelar Cliente)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (Registrar Pagamentos)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Registrar Pagamentos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Registrar Pagamentos)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Registrar Pagamentos)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Mensagens)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Mensagens)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Mensagens)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Mensagens)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook (Cancelar Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Cancelar Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Cancelar Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook (Cancelar Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9167a725-a874-4239-8c37-756ec62271f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "028ffa85240bb37b087e8851dc3b0186a212ebd4af1b0fc8100dbaa720e434c1"
+  },
+  "nodeGroups": [],
+  "id": "lUVgARGhPjaJsPBo",
+  "tags": []
+}

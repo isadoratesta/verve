@@ -1,0 +1,647 @@
+{
+  "name": "Assistente de Atendimento",
+  "nodes": [
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 6) + 3 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1904,
+        544
+      ],
+      "id": "d5ecb5eb-3683-4013-8d50-da2c92205bfc",
+      "name": "Wait",
+      "webhookId": "8b307cb0-001c-4050-873a-01d463b028e5"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "c8eccdf7-291b-4262-a86e-2e1091a34046",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1520,
+        -272
+      ],
+      "id": "323e5442-c2f7-4c5a-a366-b43e9a51ab0b",
+      "name": "Webhook",
+      "webhookId": "c8eccdf7-291b-4262-a86e-2e1091a34046"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution-api-production-8ca5.up.railway.app/chat/sendPresence/bella-studio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Fl0w!A@2026#Secure$Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Webhook').item.json.body.data?.key?.remoteJid || $('Webhook').item.json.body.body.body.data.key.remoteJid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2064,
+        544
+      ],
+      "id": "5e219ba5-c8ae-4d03-8701-f8f0fdd9db07",
+      "name": "HTTP Request (Typing)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO contatos (instancia_evolution, whatsapp)\nVALUES ($1, $2)\nON CONFLICT (whatsapp, instancia_evolution) DO UPDATE\nSET atualizado_em = NOW()\nRETURNING *;",
+        "options": {
+          "queryReplacement": "=$1: {{ $('Webhook').item.json.body.instance || $('Webhook').item.json.body.body.body.instance }}\n$2:{{ ($('Webhook').item.json.body.data?.key?.remoteJid || $('Webhook').item.json.body.body.body.data.key.remoteJid).split('@')[0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1024,
+        528
+      ],
+      "id": "220cd373-8890-4ae1-b9c2-f035b52383b6",
+      "name": "Execute a SQL (Busca/Cria Contato)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM clientes \nWHERE instancia_evolution = $1\nAND status = 'ativo'\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.instance || $('Webhook').item.json.body.body.body.instance }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        848,
+        528
+      ],
+      "id": "0f5b3c0f-e29c-464f-80bf-47fc0fba172f",
+      "name": "Execute a SQL (Busca Cliente)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO mensagens (cliente_id, remote_jid, role, conteudo, criado_em)\nVALUES (\n  '{{ $('Execute a SQL (Busca Cliente)').item.json.id }}',\n  '{{ $('Webhook').item.json.body.data?.key?.remoteJid || $('Webhook').item.json.body.body.body.data.key.remoteJid }}',\n  'assistant',\n  '{{ $('Message a model (Claude)').item.json.content[0].text.replace(/'/g, \"''\") }}',\n  NOW()\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2496,
+        544
+      ],
+      "id": "98c99995-2c09-450b-9891-3e31fcd2720e",
+      "name": "Execute a SQL (Salva Mensagem)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $('Webhook').item.json.body.data?.message?.conversation || $('Webhook').item.json.body.body.body.data.message.conversation }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "={{ $('Execute a SQL (Busca Cliente)').item.json.prompt }}\n\nINFORMAÇÕES DO CONTATO:\nNome: {{ $('Execute a SQL (Busca/Cria Contato)').item.json.nome || 'Cliente' }}\nWhatsApp: {{ $('Execute a SQL (Busca/Cria Contato)').item.json.whatsapp }}\n\nHISTÓRICO DA CONVERSA:\n{{ (() => { try { const items = $('Execute a SQL query (Histórico de Conversa)').all(); return items.length > 0 ? items.map(m => m.json.role + ': ' + m.json.conteudo).join('\\n') : 'Primeira mensagem do cliente.'; } catch(e) { return 'Primeira mensagem do cliente.'; } })() }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        320
+      ],
+      "id": "32492ffd-a03b-4e52-934f-97dd9e0c2090",
+      "name": "Message a model (Claude)",
+      "credentials": {
+        "anthropicApi": {
+          "id": "98a3ES5u33xBL4rB",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT role, conteudo, criado_em \nFROM mensagens \nWHERE cliente_id = $1 \nORDER BY criado_em DESC \nLIMIT 5",
+        "options": {
+          "queryReplacement": "{{ $('Execute a SQL (Busca Cliente)').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1216,
+        528
+      ],
+      "id": "f104308f-1136-4dde-afae-c76c3337e18e",
+      "name": "Execute a SQL query (Histórico de Conversa)",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as total\nFROM mensagens\nWHERE cliente_id = (\n  SELECT id FROM clientes WHERE instancia_evolution = $1\n)\nAND criado_em > NOW() - INTERVAL '5 minutes'\nAND role = 'user'",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.instance || $('Webhook').item.json.body.body.body.instance }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1200,
+        80
+      ],
+      "id": "fa418d78-34a4-410e-9c3e-8256a976d023",
+      "name": "Execute a SQL query (Limite de Mensagem por Contato)",
+      "credentials": {
+        "postgres": {
+          "id": "3UcN2bnqXseFko32",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0d98a15f-020f-43be-abbd-7261312c3b5f",
+              "leftValue": "={{ new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Sao_Paulo'})).getHours().toString() }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "db99e2c7-1a82-4903-8644-deeec8731b6c",
+              "leftValue": "={{ new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Sao_Paulo'})).getHours() }}",
+              "rightValue": 22,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        -16
+      ],
+      "id": "16c2f55a-62bf-46f0-a704-4efd0a0de8ce",
+      "name": "If (Horário de Atendimento)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution-api-production-8ca5.up.railway.app/message/sendText/bella-studio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Fl0w!A@2026#Secure$Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ ($('Webhook').item.json.body.data?.key?.remoteJid || $('Webhook').item.json.body.body.body.data.key.remoteJid) }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('Message a model (Claude)').item.json.content[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2288,
+        544
+      ],
+      "id": "d848dd17-cb33-45a2-844b-e9e4a594caf0",
+      "name": "HTTP Request (Writing)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution-api-production-8ca5.up.railway.app/message/sendText/bella-studio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Fl0w!A@2026#Secure$Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "={   \"number\": \"{{ $('Webhook').item.json.body.body.body.data.key.remoteJid }}\",   \"text\": \"Olá! 😊 Nosso atendimento funciona de terça a sábado das 9h às 19h e domingos das 9h às 14h.\\n\\nRecebi sua mensagem e nossa equipe vai te responder assim que abrirmos! 🌸\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1808,
+        80
+      ],
+      "id": "d42e19a7-641b-4cba-8356-4ef043147e92",
+      "name": "HTTP Request (Fora do Horário de Atendimento)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2119468-2eca-40e8-9195-bc4f11a24209",
+              "leftValue": "={{ $('Message a model (Claude)').item.json.content[0].text.toLowerCase() }}",
+              "rightValue": "vou chamar nossa equipe",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1664,
+        320
+      ],
+      "id": "d3f994d6-dd63-4056-9a25-742ea0a43958",
+      "name": "If (Solicitação de Atendimento Humano)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution-api-production-8ca5.up.railway.app/message/sendText/bella-studio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Fl0w!A@2026#Secure$Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "={   \"number\": \"5551992723566\",   \"text\": \"🚨 *Atenção!* Um cliente quer falar com um humano.\\n\\nWhatsApp: {{ $('Webhook').item.json.body.body.body.data.key.remoteJid }}\\n\\nÚltima mensagem: {{ $('Webhook').item.json.body.body.body.data.message.conversation }}\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1888,
+        304
+      ],
+      "id": "f7154c45-23e9-4822-9a2d-65a0c9e438d0",
+      "name": "HTTP Request (Quer Atendimento Humano)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f33ffb05-1336-4e80-b932-e9355e1b84b1",
+              "leftValue": "={{ $('Execute a SQL query (Limite de Mensagem por Contato)').item.json.total }}",
+              "rightValue": 10,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        432
+      ],
+      "id": "b9c31744-f224-458b-b243-660faa2eddd7",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution-api-production-8ca5.up.railway.app/message/sendText/bella-studio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "Fl0w!A@2026#Secure$Key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "={   \"number\": \"5551992723566\",   \"text\": \"⚠️ *Limite de mensagens atingido!*\\n\\nO contato {{ $('Webhook').item.json.body.body.body.data.key.remoteJid }} enviou mais de 10 mensagens em 5 minutos.\\n\\nO atendimento foi pausado automaticamente.\" }"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        320
+      ],
+      "id": "31993a4c-dcc6-4101-9e67-39801d268b7f",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE clientes \nSET \n  status = 'ativo',\n  prompt = 'Você é a Luna, assistente virtual do Bella Studio — um salão de beleza moderno e acolhedor localizado na Rua das Flores, 247, Centro, São Paulo/SP.\n\nSOBRE O BELLA STUDIO:\nO Bella Studio é especializado em cabelos, unhas e estética, atendendo clientes que buscam qualidade e um atendimento personalizado. Funciona de terça a sábado, das 9h às 19h, e aos domingos das 9h às 14h. Não abrimos às segundas-feiras.\n\nSERVIÇOS E PREÇOS:\nCabelos:\n- Corte feminino: R$80\n- Corte masculino: R$50\n- Escova simples: R$60\n- Escova progressiva: R$180 a R$280 (conforme comprimento)\n- Coloração: a partir de R$120\n- Mechas/Luzes: a partir de R$150\n- Hidratação: R$70\n- Cauterização: R$120\n\nUnhas:\n- Manicure: R$35\n- Pedicure: R$45\n- Manicure + Pedicure: R$70\n- Unhas em gel: R$120\n- Alongamento: R$150\n\nEstética:\n- Design de sobrancelha: R$30\n- Depilação facial: R$25\n- Limpeza de pele: R$120\n\nEQUIPE:\n- Ana Paula — especialista em coloração e mechas\n- Carla — especialista em cortes e escova\n- Juliana — especialista em unhas e estética\n\nAGENDAMENTO:\nPara agendar, pergunte ao cliente:\n1. Qual serviço deseja\n2. Preferência de profissional (opcional)\n3. Dia e horário desejado\n4. Nome completo\n\nREGRAS IMPORTANTES:\n- Seja sempre calorosa, simpática e use linguagem informal mas profissional\n- Use emojis com moderação\n- Se o cliente quiser falar com um humano, diga que vai chamar a equipe e encerre com: \"Vou chamar nossa equipe agora, tudo bem? 😊\"\n- Não confirme agendamentos — apenas colete as informações e diga que a equipe entrará em contato para confirmar\n- Responda sempre em português do Brasil\n- Nunca invente informações que não estão neste prompt'\nWHERE instancia_evolution = 'bella-studio'\nRETURNING status, prompt;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8c3bf4f1-3f24-4437-8a80-13d8808b2e56",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "ctEzYep4QVZ9ipcS",
+          "name": "Postgres account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If (Horário de Atendimento)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Typing)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Writing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL (Busca/Cria Contato)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query (Histórico de Conversa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL (Busca Cliente)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL (Busca/Cria Contato)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model (Claude)": {
+      "main": [
+        [
+          {
+            "node": "If (Solicitação de Atendimento Humano)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Histórico de Conversa)": {
+      "main": [
+        [
+          {
+            "node": "Message a model (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Typing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query (Limite de Mensagem por Contato)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If (Horário de Atendimento)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Fora do Horário de Atendimento)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query (Limite de Mensagem por Contato)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Writing)": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL (Salva Mensagem)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If (Solicitação de Atendimento Humano)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Quer Atendimento Humano)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL (Busca Cliente)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d0bce7d0-4fe9-460b-886e-6a719bb30b86",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "028ffa85240bb37b087e8851dc3b0186a212ebd4af1b0fc8100dbaa720e434c1"
+  },
+  "nodeGroups": [],
+  "id": "HNjVsyQodHz0INBs",
+  "tags": []
+}
